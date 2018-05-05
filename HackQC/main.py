@@ -1,11 +1,15 @@
 import json
-import math
+import math, numpy
+
 from random import randint
 
 class coordonnee(object):
     x = 0
     y = 0
 
+    def __init(self, x, y):
+        self.x = x
+        self.y = y
 
 class route(object):
     road = list()
@@ -22,6 +26,60 @@ def getReversePosition(points, coor):
         return points[len(points) - 1]
     else:
         return points[0]
+
+def addMissingPoints(data, liste, coorDebut, coorFin):
+    coorDX = coorDebut[0]
+    coorDY = coorDebut[1]
+    coorFX = coorFin[0]
+    coorFY = coorFin[1]
+    for geometry in data['features']:
+        points = (geometry['geometry']['coordinates'])
+        same = 0
+        for point in points:
+            coorX = point[0]
+            coorY = point[1]
+            if (coorX == coorDX and coorY == coorDY):
+                same += 1
+            if (coorX == coorFX and coorY == coorFY):
+                same += 1
+        if (same > 1):
+            for num in range(1, len(points)-2):
+                liste.append(points[num])
+
+
+def addMissingSegments(data, liste, coorDebut, coorFin):
+    DsegmentList = list()
+    LsegmentList = list()
+    coorDX = coorDebut[0]
+    coorDY = coorDebut[1]
+    coorFX = coorFin[0]
+    coorFY = coorFin[1]
+    for geometry in data['features']:
+        points = (geometry['geometry']['coordinates'])
+        for point in points:
+            coorX = point[0]
+            coorY = point[1]
+            if (coorX == coorDX and coorY == coorDY):
+                DsegmentList.append(points)
+            if (coorX == coorFX and coorY == coorFY):
+                LsegmentList.append(points)
+
+    if(DsegmentList != [] and LsegmentList != []):
+        for Dsegment in DsegmentList:
+            for Dpoints in DsegmentList:
+                for Dpoint in Dpoints:
+                    for Lsegment in LsegmentList:
+                        for Lpoints in LsegmentList:
+                            for Lpoint in Lpoints:
+                                #if Dpoint[0] == Lpoint[0] and Dpoint[1] == Lpoint[1]:
+                                print(Lpoint[0])
+                                if Dpoint[1] == Lpoint[1]:
+                                    print("You won")
+                                    for DsamePoint in DsegmentList:
+                                        liste.append(DsamePoint)
+                                    for LsamePoint in LsegmentList:
+                                        liste.append(LsamePoint)
+
 
 def trouverIntersection(data, listeCoor, coor):
     coorAX = coor[0]
@@ -41,14 +99,13 @@ from pprint import pprint
 jsonfile = 'C:\\Users\\USER\\PycharmProjects\\HackQC\\geobase.geojson' # path to your json file
 with open(jsonfile) as data_file:
     data = json.load(data_file)
-#pprint(data['features'][0]['geometry']['coordinates'][0])
 
 debut = coordonnee()
 fin = coordonnee()
-debut.x = -73.5841054355436
-debut.y = 45.5302242959115
-fin.x = -73.6751080554656
-fin.y = 45.5093888210768
+debut.x = -73.6398556612252
+debut.y = 45.5952415912627
+fin.x = -73.7091820442561
+fin.y = 45.4450198040751
 
 distanceInitiale = distance(debut.x,debut.y,fin.x,fin.y)
 #print(distanceInitiale)
@@ -65,44 +122,55 @@ for geometry in data['features']:
             startSegment = geometry['geometry']['coordinates']
         if (coorX == fin.x and coorY == fin.y):
             endSegment = geometry['geometry']['coordinates']
-#print(startSegment)
-#print(endSegment)
 
 sortie = 1
 lastUsedSegment = startSegment[len(startSegment) - 1]
 destinationSegment = endSegment[len(endSegment) - 1]
 routeList = []
-route = []
 lastSegmentPointList = list()
 currentSegment = lastUsedSegment
+closestSegment = lastUsedSegment
 
 i = 16
 j = 1
+compteur = 0
+
+for initNum in range (0, 16, 1):
+    routeList.append(list())
 
 while(j<=16):
+
+    rangeMin = 0
+    rangeMax = i
+
     for num1 in range(0,j,1):
         lastSegmentPointList = list()
         trouverIntersection(data, lastSegmentPointList, lastUsedSegment)
         distanceMinimale = 100000.00
-        #pprint(lastSegmentPointList)
         for point in lastSegmentPointList:
             currentDistance = distance(point[0], point[1], destinationSegment[0], destinationSegment[1])
             currentSegment = lastSegmentPointList[0]
             if ((currentDistance < distanceMinimale) and (lastUsedSegment != currentSegment) and (len(lastSegmentPointList)) > 1):
                 distanceMinimale = currentDistance;
                 currentSegment = point
+                closestSegment = currentSegment
+        lastUsedSegment = closestSegment
 
-        for num in range(0,i):
-            if(i==16):
-                routeList.append(currentSegment)
-            else:
-                routeList[num].append(currentSegment)
-
-
+        for num in range(rangeMin, rangeMax):
+            tempList = routeList[num]
+            if(len(tempList) > 2):
+                addMissingPoints(data, tempList, tempList[len(tempList)-1], closestSegment)
+                addMissingSegments(data, tempList, tempList[len(tempList)-1], closestSegment)
+            tempList.append(closestSegment)
+            routeList[num] = tempList
+            tempList = list()
+        rangeMin += i
+        rangeMax += i
     i = int(i/2)
     j = j*2
-    lastUsedSegment = currentSegment
-pprint(routeList)
+
+print(compteur)
+#pprint(routeList)
 
 
 
