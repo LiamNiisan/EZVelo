@@ -163,10 +163,10 @@ with open(jsonfile) as data_file:
 
 debut = coordonnee()
 fin = coordonnee()
-debut.x = -73.6398556612252
-debut.y = 45.5952415912627
-fin.x = -73.7091820442561
-fin.y = 45.4450198040751
+debut.x = -73.5717932176314
+debut.y = 45.5148061021868
+fin.x = -73.6603665191824
+fin.y = 45.5692741805157
 
 distanceInitiale = distance(debut.x, debut.y, fin.x, fin.y)
 # print(distanceInitiale)
@@ -187,6 +187,7 @@ for geometry in data['features']:
 lastUsedSegment = startSegment[len(startSegment) - 1]
 destinationSegment = endSegment[len(endSegment) - 1]
 routeList = []
+routeListChoisi = []
 lastSegmentPointList = list()
 currentSegment = lastUsedSegment
 closestSegment = lastUsedSegment
@@ -194,7 +195,7 @@ closestSegment = lastUsedSegment
 i = 16
 j = 1
 
-for initNum in range(0, 16, 1):
+for ini1 in range(0, 16):
     routeList.append(list())
 
 while (j <= 16):
@@ -219,7 +220,7 @@ while (j <= 16):
             tempList = routeList[num]
             if (len(tempList) > 2):
                 addMissingPoints(data, tempList, tempList[len(tempList) - 1], closestSegment)
-                addMissingSegments(data, tempList, tempList[len(tempList) - 1], closestSegment, 0)
+                #addMissingSegments(data, tempList, tempList[len(tempList) - 1], closestSegment, 0)
             tempList.append(closestSegment)
             routeList[num] = tempList
             tempList = list()
@@ -228,12 +229,69 @@ while (j <= 16):
     i = int(i / 2)
     j = j * 2
 
-pprint(routeList)
+#pprint(routeList[0])
+"""""
+nombreRoutes = int(distanceInitiale*10000)
+for ini1 in range(0, nombreRoutes):
+    routeList.append(lastUsedSegment)
 
-#while (currentDistance > 0):
-#   for num in range(0,15):
-#       SegmentList = list()
-#       trouverIntersection(data, SegmentList, lastUsedSegment)
-#       for point in SegmentList:
-#           currentDistance = distance(point[0], point[1], destinationSegment[0], destinationSegment[1])
+for ini2 in range(0, nombreRoutes):
+    routeListChoisi.append(lastUsedSegment)
+
+print(nombreRoutes)
+
+for routeNum in range(1,nombreRoutes):
+    lastUsedSegment = startSegment[len(startSegment) - 1]
+    for routeLimit in range(0,1+int(nombreRoutes/5000)):
+        currentDistance = distance(lastUsedSegment[0], lastUsedSegment[1], fin.x, fin.y)
+        segmentList = list()
+        trouverIntersection(data, segmentList, lastUsedSegment)
+        for compt in range(0,2):
+            point = segmentList[randint(0,len(segmentList)-1)]
+            nouvelleDistance = distance(point[0], point[1], fin.x, fin.y)
+            if(nouvelleDistance < currentDistance):
+                lastUsedSegment = point
+        routeList[routeNum].append(lastUsedSegment)
+    distanceFinale = distance(routeList[routeNum][len(routeList[routeNum])-1][0], routeList[routeNum][len(routeList[routeNum])-1][1], fin.x, fin.y)
+    if(math.pow(distanceFinale - distanceInitiale, 2) < 0.000001):
+        routeListChoisi[routeNum] = routeList[routeNum]
+    print(len(routeListChoisi))
+    print(routeNum)
+
+pprint(routeList[22])
+
+
+
+
+
+
+
+"""
+for num in range(0,15):
+    currentDistance = distance(routeList[num][len(routeList[num])-1][0], routeList[num][len(routeList[num])-1][1], fin.x, fin.y)
+    lastUsedSegment = routeList[num][len(routeList[num])-1]
+    #while (currentDistance > 0):
+    for i in range (0,50):
+        #print(currentDistance)
+        distanceMinimale = 100000.00
+        segmentList = list()
+        trouverIntersection(data, segmentList, lastUsedSegment)
+        #for compt in range(0, 1):
+        #    point = segmentList[randint(0, len(segmentList) - 1)]
+        #    nouvelleDistance = distance(point[0], point[1], fin.x, fin.y)
+        #    if (nouvelleDistance < distanceMinimale):
+        #        lastUsedSegment = point
+        #routeList[num].append(lastUsedSegment)
+        for point in segmentList:
+            currentDistance = distance(point[0], point[1], fin.x, fin.y)
+            if(currentDistance < distanceMinimale) and (distanceMinimale - currentDistance > 0.0001):
+                distanceMinimale = currentDistance
+                currentSegment = point
+        lastUsedSegment = currentSegment
+        routeList[num].append(lastUsedSegment)
+        currentDistance = distance(lastUsedSegment[0], lastUsedSegment[1], fin.x, fin.y)
+    print(num)
+
+
+pprint(routeList)
 
